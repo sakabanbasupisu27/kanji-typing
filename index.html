@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>漢字タイピングゲーム</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 15px;
+      padding-left: 175px; 
+      background-color: #f4f7f6;
+      box-sizing: border-box;
+      height: 100vh;
+      font-family: sans-serif;
+      
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .ad-space {
+      width: 160px;
+      height: 100%;
+      background-color: #e0e6ed;
+      border: 2px dashed #b0bec5;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #78909c;
+      font-size: 14px;
+      font-weight: bold;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .box {
+      position: relative;
+      border: 6px solid #3498db; 
+      background-color: #ffffff;
+      border-radius: 12px;
+      flex: 1;
+      height: 100%;
+      box-sizing: border-box;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .screen-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- メニュー画面 --- */
+    h1 {
+      font-size: 110px;
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 80px;
+      letter-spacing: 2px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .btn-main {
+      width: 100%;
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      padding: 22px 0;
+      font-size: 34px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .btn-main:hover {
+      background-color: #27ae60;
+    }
+
+    .btn-sub {
+      width: 100%;
+      background-color: #ecf0f1;
+      color: #34495e;
+      border: 2px solid #bdc3c7;
+      padding: 16px 0;
+      font-size: 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .btn-sub:hover {
+      background-color: #bdc3c7;
+      border-color: #95a5a6;
+    }
+
+    .btn-ranking {
+      position: absolute;
+      bottom: 25px;
+      right: 25px;
+      width: 110px;
+      height: 110px;
+      background-color: #f1c40f;
+      color: #7f6000;
+      border: 3px solid #f39c12;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-ranking:hover {
+      background-color: #f39c12;
+      color: #ffffff;
+    }
+
+    .btn-ranking .icon {
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+
+    /* --- コース・難易度選択画面 --- */
+    .screen-title {
+      font-size: 48px;
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 30px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      width: 100%;
+      max-width: 650px;
+      margin-bottom: 35px;
+    }
+
+    .btn-category {
+      background-color: #ffffff;
+      color: #34495e;
+      border: 3px solid #3498db;
+      padding: 18px 0;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-category:hover {
+      background-color: #ebf5fb;
+    }
+
+    .btn-category.selected {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .difficulty-section {
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .difficulty-section.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .difficulty-title {
+      font-size: 22px;
+      color: #7f8c8d;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .difficulty-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .btn-difficulty {
+      width: 100%;
+      padding: 16px 0;
+      font-size: 26px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn-difficulty:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .btn-easy { background-color: #2ecc71; }
+    .btn-normal { background-color: #e67e22; }
+    .btn-hard { background-color: #e74c3c; }
+
+    .btn-back {
+      position: absolute;
+      top: 25px;
+      left: 25px;
+      background-color: #95a5a6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-back:hover {
+      background-color: #7f8c8d;
+    }
+
+    /* --- プレイ画面 --- */
+    .info-bar {
+      display: flex;
+      gap: 30px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #34495e;
+      margin-bottom: 5px;
+    }
+
+    .timer-circle {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      width: 130px;
+      height: 130px;
+      background-color: #ffffff;
+      border: 5px solid #e74c3c;
+      border-radius: 50%;
+      
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      
+      color: #e74c3c;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .timer-circle .label {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .timer-circle .time-num {
+      font-size: 42px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .timer-circle .time-num.endless {
+      font-size: 28px;
+      color: #2ecc71;
+    }
+
+    .timer-circle.endless-border {
+      border-color: #2ecc71;
+    }
+
+    .typed-kana-display {
+      font-size: 30px;
+      color: #2ecc71;
+      font-weight: bold;
+      letter-spacing: 3px;
+      min-height: 32px;
+      margin-bottom: -15px;
+      z-index: 2;
+    }
+
+    .kanji-display {
+      font-size: 95px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 0px;
+    }
+
+    .hint-display {
+      font-size: 26px;
+      color: #e67e22;
+      font-weight: bold;
+      letter-spacing: 4px;
+      min-height: 30px;
+      margin: 0px;
+      font-family: monospace;
+    }
+
+    .romaji-display {
+      font-size: 42px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      font-family: monospace;
+      min-height: 48px;
+      color: #2ecc71;
+      margin-top: -5px;
+    }
+
+    /* --- 終了バナー --- */
+    .game-over-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      width: 80%;
+      max-width: 600px;
+      background-color: rgba(231, 76, 60, 0.95);
+      color: white;
+      font-size: 64px;
+      font-weight: bold;
+      text-align: center;
+      padding: 30px 0;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      letter-spacing: 4px;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+
+    .game-over-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* --- 結果画面のスタイル --- */
+    .result-title {
+      font-size: 44px;
+      color: #2c3e50;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .rank-in-notice {
+      font-size: 22px;
+      color: #f39c12;
+      font-weight: bold;
+      margin-bottom: 15px;
+      min-height: 28px;
+    }
+
+    .result-score-box {
+      font-size: 38px;
+      color: #27ae60;
+      font-weight: bold;
+      margin-bottom: 25px;
+      background-color: #e8f8f5;
+      padding: 15px 40px;
+      border-radius: 16px;
+      border: 3px dashed #2ecc71;
+    }
+
+    .result-details {
+      display: flex;
+      gap: 30px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #34495e;
+      margin-bottom: 30px;
+      background-color: #f8f9fa;
+      padding: 15px 25px;
+      border-radius: 12px;
+      border: 2px solid #e0e6ed;
+    }
+
+    .result-details span {
+      color: #2980b9;
+    }
+
+    .result-button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .btn-sub-result {
+      width: 100%;
+      background-color: #95a5a6;
+      color: white;
+      border: none;
+      padding: 16px 0;
+      font-size: 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .btn-sub-result:hover {
+      background-color: #7f8c8d;
+    }
+
+    /* --- ランキング画面のスタイル --- */
+    .ranking-container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .ranking-tabs {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-tab {
+      background-color: #ecf0f1;
+      color: #7f8c8d;
+      border: none;
+      padding: 12px 30px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-tab.active {
+      background-color: #f39c12;
+      color: white;
+      box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);
+    }
+
+    .ranking-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 25px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f8f9fa;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #34495e;
+      border: 2px solid #e0e6ed;
+    }
+
+    .ranking-item.is-me {
+      border: 3px solid #3498db !important;
+      background-color: #ebf5fb !important;
+    }
+
+    .ranking-item:nth-child(1) { border-color: #f1c40f; background-color: #fef9e7; }
+    .ranking-item:nth-child(2) { border-color: #bdc3c7; background-color: #f2f4f4; }
+    .ranking-item:nth-child(3) { border-color: #e67e22; background-color: #fbf5ef; }
+
+    .rank-num {
+      width: 35px;
+      text-align: left;
+    }
+
+    .rank-score {
+      color: #27ae60;
+    }
+
+    .no-record {
+      text-align: center;
+      color: #95a5a6;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 40px 0;
+    }
+
+    /* --- 設定画面のスタイル --- */
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 450px;
+      background-color: #f8f9fa;
+      padding: 30px;
+      border-radius: 16px;
+      border: 2px solid #e0e6ed;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .form-group label {
+      font-size: 20px;
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    .warning-text {
+      color: #e74c3c;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px;
+      font-size: 22px;
+      border: 2px solid #bdc3c7;
+      border-radius: 10px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: #3498db;
+    }
+
+    .error-msg {
+      color: #e74c3c;
+      font-size: 14px;
+      font-weight: bold;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- メインゲームエリア -->
+  <div class="box">
+
+    <!-- タイムアップ時の横長バナー -->
+    <div id="game-over-banner" class="game-over-banner">終了！</div>
+
+    <!-- 1. メインメニュー画面 -->
+    <div id="menu-screen" class="screen-content">
+      <h1>漢字タイピング</h1>
+
+      <div class="button-group">
+        <button id="start-btn" class="btn-main">スタート</button>
+        <button class="btn-sub">あそびかた</button>
+        <button id="settings-btn" class="btn-sub">設定</button>
+      </div>
+
+      <button id="ranking-btn" class="btn-ranking">
+        <span class="icon">👑</span>
+        <span>ランキング</span>
+      </button>
+    </div>
+
+    <!-- 2. コース＆難易度選択画面 -->
+    <div id="select-screen" class="screen-content hidden">
+      <button id="back-to-menu-btn" class="btn-back">← もどる</button>
+      <h2 class="screen-title">コースを えらんでね</h2>
+
+      <div class="category-grid">
+        <button class="btn-category" data-cat="練習">練習</button>
+        <button class="btn-category" data-cat="普通">普通</button>
+        <button class="btn-category" data-cat="小1,2">小1,2</button>
+        <button class="btn-category" data-cat="小3,4">小3,4</button>
+        <button class="btn-category" data-cat="小5,6">小5,6</button>
+        <button class="btn-category" data-cat="中学">中学</button>
+      </div>
+
+      <div id="difficulty-section" class="difficulty-section">
+        <div class="difficulty-title">▼ むずかしさを えらんで スタート！</div>
+        <div class="difficulty-group">
+          <button class="btn-difficulty btn-easy" data-diff="簡単">簡単</button>
+          <button class="btn-difficulty btn-normal" data-diff="普通">普通</button>
+          <button class="btn-difficulty btn-hard" data-diff="難しい">難しい</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. タイピングプレイ画面 -->
+    <div id="play-screen" class="screen-content hidden">
+      <button id="back-to-select-btn" class="btn-back">← やめる</button>
+
+      <div id="timer-box" class="timer-circle">
+        <span class="label">制限時間</span>
+        <span id="timer-num" class="time-num">60</span>
+      </div>
+
+      <div class="info-bar">
+        <div id="current-mode">コース: - / -</div>
+        <div id="score-display">スコア: 0</div>
+        <div id="combo-display">コンボ: 0</div>
+      </div>
+
+      <div id="typed-kana-text" class="typed-kana-display"></div>
+      <div id="kanji-text" class="kanji-display">漢字</div>
+      <div id="hint-text" class="hint-display"></div>
+
+      <div class="romaji-display">
+        <span id="typed-text"></span>
+      </div>
+    </div>
+
+    <!-- 4. 結果発表画面 -->
+    <div id="result-screen" class="screen-content hidden">
+      <div class="result-title">結果！</div>
+      <div id="rank-in-notice" class="rank-in-notice"></div>
+      <div id="result-correct-count" class="result-score-box">0問正解！</div>
+      
+      <div class="result-details">
+        <div>正しく打てた数: <span id="res-typed-chars">0</span>文字</div>
+        <div>難易度: <span id="res-difficulty">-</span></div>
+        <div>ミスタイプ数: <span id="res-miss-count">0</span>回</div>
+      </div>
+
+      <div class="result-button-group">
+        <button id="back-to-select-from-result" class="btn-main" style="padding: 16px 0; font-size: 24px;">もういちど遊ぶ</button>
+        <button id="back-to-menu-from-result" class="btn-sub-result">終わる</button>
+      </div>
+    </div>
+
+    <!-- 5. ランキング画面 -->
+    <div id="ranking-screen" class="screen-content hidden">
+      <button id="back-to-menu-from-ranking" class="btn-back">← もどる</button>
+      <h2 class="screen-title" style="margin-bottom: 20px;">ランキング</h2>
+
+      <div class="ranking-container">
+        <div class="ranking-tabs">
+          <button class="btn-tab active" data-tab="monthly">月間</button>
+          <button class="btn-tab" data-tab="weekly">週間</button>
+          <button class="btn-tab" data-tab="daily">今日</button>
+        </div>
+
+        <div id="ranking-list" class="ranking-list"></div>
+      </div>
+    </div>
+
+    <!-- 6. 設定画面（ニックネーム変更） -->
+    <div id="settings-screen" class="screen-content hidden">
+      <button id="back-to-menu-from-settings" class="btn-back">← もどる</button>
+      <h2 class="screen-title" style="margin-bottom: 25px;">設定</h2>
+
+      <div class="settings-form">
+        <div class="form-group">
+          <label for="nickname-input">ニックネーム（半角英数字のみ）</label>
+          <div class="warning-text">※本名は入力しないでください</div>
+          <input type="text" id="nickname-input" maxlength="12" placeholder="例: Player123">
+          <div id="nickname-error" class="error-msg"></div>
+        </div>
+
+        <button id="save-nickname-btn" class="btn-main" style="padding: 14px 0; font-size: 24px;">保存する</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 右側広告スペース -->
+  <div class="ad-space">広告エリア（右）</div>
+
+  <script>
+    // --- かな→ローマ字変換テーブル（ヘボン式・訓令式・分割打ち完全網羅） ---
+    const ROMAJI_TABLE = {
+      'あ': ['a'], 'い': ['i'], 'う': ['u', 'whu'], 'え': ['e'], 'お': ['o'],
+      'か': ['ka', 'ca'], 'き': ['ki'], 'く': ['ku', 'cu'], 'け': ['ke'], 'こ': ['ko', 'co'],
+      'さ': ['sa'], 'し': ['shi', 'si', 'ci'], 'す': ['su'], 'せ': ['se', 'ce'], 'そ': ['so'],
+      'た': ['ta'], 'ち': ['chi', 'ti'], 'つ': ['tsu', 'tu'], 'て': ['te'], 'と': ['to'],
+      'な': ['na'], 'に': ['ni'], 'ぬ': ['nu'], 'ね': ['ne'], 'の': ['no'],
+      'は': ['ha'], 'ひ': ['hi'], 'ふ': ['fu', 'hu'], 'へ': ['he'], 'ほ': ['ho'],
+      'ま': ['ma'], 'み': ['mi'], 'む': ['mu'], 'め': ['me'], 'も': ['mo'],
+      'や': ['ya'], 'ゆ': ['yu'], 'よ': ['yo'],
+      'ら': ['ra'], 'り': ['ri'], 'る': ['ru'], 'れ': ['re'], 'ろ': ['ro'],
+      'わ': ['wa'], 'を': ['wo'], 'ん': ['nn', "n'", 'xn'],
+      'が': ['ga'], 'ぎ': ['gi'], 'ぐ': ['gu'], 'げ': ['ge'], 'ご': ['go'],
+      'ざ': ['za'], 'じ': ['ji', 'zi'], 'ず': ['zu'], 'ぜ': ['ze'], 'ぞ': ['zo'],
+      'だ': ['da'], 'ぢ': ['di'], 'づ': ['du'], 'で': ['de'], 'ど': ['do'],
+      'ば': ['ba'], 'び': ['bi'], 'ぶ': ['bu'], 'べ': ['be'], 'ぼ': ['bo'],
+      'ぱ': ['pa'], 'ぴ': ['pi'], 'ぷ': ['pu'], 'ぺ': ['pe'], 'ぽ': ['po'],
+      'きゃ': ['kya'], 'きゅ': ['kyu'], 'きょ': ['kyo'],
+      'しゃ': ['sha', 'sya'], 'しゅ': ['shu', 'syu'], 'しょ': ['sho', 'syo'], 'しぇ': ['she', 'sye'],
+      'ちゃ': ['cha', 'tya'], 'ちゅ': ['chu', 'tyu'], 'ちょ': ['cho', 'tyo'], 'ちぇ': ['che', 'tye'],
+      'にゃ': ['nya'], 'にゅ': ['nyu'], 'にょ': ['nyo'],
+      'ひゃ': ['hya'], 'ひゅ': ['hyu'], 'ひょ': ['hyo'],
+      'みゃ': ['mya'], 'みゅ': ['myu'], 'みょ': ['myo'],
+      'りゃ': ['rya'], 'りゅ': ['ryu'], 'りょ': ['ryo'],
+      'ぎゃ': ['gya'], 'ぎゅ': ['gyu'], 'ぎょ': ['gyo'],
+      'じゃ': ['ja', 'zya', 'jya'], 'じゅ': ['ju', 'zyu', 'jyu'], 'じょ': ['jo', 'zyo', 'jyo'],
+      'びゃ': ['bya'], 'びゅ': ['byu'], 'びょ': ['byo'],
+      'ぴゃ': ['pya'], 'ぴゅ': ['pyu'], 'ぴょ': ['pyo'],
+      'ぁ': ['la', 'xa'], 'ぃ': ['li', 'xi'], 'ぅ': ['lu', 'xu'], 'ぇ': ['le', 'xe'], 'ぉ': ['lo', 'xo'],
+      'ゃ': ['lya', 'xya'], 'ゅ': ['lyu', 'xyu'], 'ょ': ['lyo', 'xyo'], 'っ': ['ltu', 'xtu', 'ltsu']
+    };
+
+    function parseKanaToTree(kanaStr) {
+      let nodes = [];
+      let i = 0;
+      while (i < kanaStr.length) {
+        let char = kanaStr[i];
+        let nextChar = kanaStr[i + 1] || '';
+
+        if (char === 'っ') {
+          nodes.push({ kana: 'っ', isSmallTsu: true });
+          i++;
+          continue;
+        }
+
+        let combo = char + nextChar;
+        if (ROMAJI_TABLE[combo]) {
+          nodes.push({ kana: combo, patterns: ROMAJI_TABLE[combo] });
+          i += 2;
+          continue;
+        }
+
+        if (ROMAJI_TABLE[char]) {
+          nodes.push({ kana: char, patterns: ROMAJI_TABLE[char] });
+          i++;
+          continue;
+        }
+
+        nodes.push({ kana: char, patterns: [char] });
+        i++;
+      }
+
+      for (let k = 0; k < nodes.length; k++) {
+        if (nodes[k].isSmallTsu) {
+          let nextNode = nodes[k + 1];
+          let patterns = ['ltu', 'xtu'];
+          if (nextNode && nextNode.patterns) {
+            nextNode.patterns.forEach(p => {
+              patterns.push(p[0]);
+            });
+          }
+          nodes[k].patterns = Array.from(new Set(patterns));
+        }
+      }
+      return nodes;
+    }
+
+    // --- 効果音用の関数（Web Audio API） ---
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playCorrectSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+
+    function playMissSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    // --- 単語データ ---
+    const rawWordList = [
+      // 【中学1年生レベル (50語)】
+      { category: "中学", grade: 1, kanji: "美術", kana: "びじゅつ" },
+      { category: "中学", grade: 1, kanji: "柔道", kana: "じゅうどう" },
+      { category: "中学", grade: 1, kanji: "栽培", kana: "さいばい" },
+      { category: "中学", grade: 1, kanji: "約束", kana: "やくそく" },
+      { category: "中学", grade: 1, kanji: "季節", kana: "きせつ" },
+      { category: "中学", grade: 1, kanji: "太陽", kana: "たいよう" },
+      { category: "中学", grade: 1, kanji: "地球", kana: "ちきゅう" },
+      { category: "中学", grade: 1, kanji: "健康", kana: "けんこう" },
+      { category: "中学", grade: 1, kanji: "歴史", kana: "れきし" },
+      { category: "中学", grade: 1, kanji: "地理", kana: "ちり" },
+      { category: "中学", grade: 1, kanji: "実験", kana: "じっけん" },
+      { category: "中学", grade: 1, kanji: "観察", kana: "かんさつ" },
+      { category: "中学", grade: 1, kanji: "計算", kana: "けいさん" },
+      { category: "中学", grade: 1, kanji: "図形", kana: "ずけい" },
+      { category: "中学", grade: 1, kanji: "単語", kana: "たんご" },
+      { category: "中学", grade: 1, kanji: "文法", kana: "ぶんぽう" },
+      { category: "中学", grade: 1, kanji: "合唱", kana: "がっしょう" },
+      { category: "中学", grade: 1, kanji: "演奏", kana: "えんそう" },
+      { category: "中学", grade: 1, kanji: "陸上", kana: "りくじょう" },
+      { category: "中学", grade: 1, kanji: "水泳", kana: "すいえい" },
+      { category: "中学", grade: 1, kanji: "衣服", kana: "いふく" },
+      { category: "中学", grade: 1, kanji: "調理", kana: "ちょうり" },
+      { category: "中学", grade: 1, kanji: "掃除", kana: "そうじ" },
+      { category: "中学", grade: 1, kanji: "当番", kana: "とうばん" },
+      { category: "中学", grade: 1, kanji: "委員", kana: "いいん" },
+      { category: "中学", grade: 1, kanji: "学級", kana: "がっきゅう" },
+      { category: "中学", grade: 1, kanji: "校舎", kana: "こうしゃ" },
+      { category: "中学", grade: 1, kanji: "体育", kana: "たいいく" },
+      { category: "中学", grade: 1, kanji: "英語", kana: "えいご" },
+      { category: "中学", grade: 1, kanji: "数学", kana: "すうがく" },
+      { category: "中学", grade: 1, kanji: "理科", kana: "りか" },
+      { category: "中学", grade: 1, kanji: "社会", kana: "しゃかい" },
+      { category: "中学", grade: 1, kanji: "国語", kana: "こくご" },
+      { category: "中学", grade: 1, kanji: "宿題", kana: "しゅくだい" },
+      { category: "中学", grade: 1, kanji: "復習", kana: "ふくしゅう" },
+      { category: "中学", grade: 1, kanji: "予習", kana: "よしゅう" },
+      { category: "中学", grade: 1, kanji: "試験", kana: "しけん" },
+      { category: "中学", grade: 1, kanji: "成績", kana: "せいせき" },
+      { category: "中学", grade: 1, kanji: "出席", kana: "しゅっせき" },
+      { category: "中学", grade: 1, kanji: "欠席", kana: "けっせき" },
+      { category: "中学", grade: 1, kanji: "友達", kana: "ともだち" },
+      { category: "中学", grade: 1, kanji: "先輩", kana: "せんぱい" },
+      { category: "中学", grade: 1, kanji: "後輩", kana: "こうはい" },
+      { category: "中学", grade: 1, kanji: "先生", kana: "せんせい" },
+      { category: "中学", grade: 1, kanji: "部活", kana: "ぶかつ" },
+      { category: "中学", grade: 1, kanji: "大会", kana: "たいかい" },
+      { category: "中学", grade: 1, kanji: "優勝", kana: "ゆうしょう" },
+      { category: "中学", grade: 1, kanji: "努力", kana: "どりょく" },
+      { category: "中学", grade: 1, kanji: "成功", kana: "せいこう" },
+      { category: "中学", grade: 1, kanji: "失敗", kana: "しっぱい" },
+
+      // 【中学2年生レベル (50語)】
+      { category: "中学", grade: 2, kanji: "証明", kana: "しょうめい" },
+      { category: "中学", grade: 2, kanji: "干渉", kana: "かんしょう" },
+      { category: "中学", grade: 2, kanji: "領域", kana: "りょういき" },
+      { category: "中学", grade: 2, kanji: "比例", kana: "ひれい" },
+      { category: "中学", grade: 2, kanji: "関数", kana: "かんすう" },
+      { category: "中学", grade: 2, kanji: "方程式", kana: "ほうていしき" },
+      { category: "中学", grade: 2, kanji: "確率", kana: "かくりつ" },
+      { category: "中学", grade: 2, kanji: "細胞", kana: "さいぼう" },
+      { category: "中学", grade: 2, kanji: "光合成", kana: "こうごうせい" },
+      { category: "中学", grade: 2, kanji: "呼吸", kana: "こきゅう" },
+      { category: "中学", grade: 2, kanji: "電流", kana: "でんりゅう" },
+      { category: "中学", grade: 2, kanji: "電圧", kana: "でんあつ" },
+      { category: "中学", grade: 2, kanji: "抵抗", kana: "ていこう" },
+      { category: "中学", grade: 2, kanji: "磁界", kana: "じかい" },
+      { category: "中学", grade: 2, kanji: "化合", kana: "かごう" },
+      { category: "中学", grade: 2, kanji: "分解", kana: "ぶんかい" },
+      { category: "中学", grade: 2, kanji: "酸化", kana: "さんか" },
+      { category: "中学", grade: 2, kanji: "還元", kana: "かんげん" },
+      { category: "中学", grade: 2, kanji: "気象", kana: "きしょう" },
+      { category: "中学", grade: 2, kanji: "前線", kana: "ぜんせん" },
+      { category: "中学", grade: 2, kanji: "湿度", kana: "しつど" },
+      { category: "中学", grade: 2, kanji: "幕府", kana: "ばくふ" },
+      { category: "中学", grade: 2, kanji: "鎖国", kana: "さこく" },
+      { category: "中学", grade: 2, kanji: "開国", kana: "かいこく" },
+      { category: "中学", grade: 2, kanji: "維新", kana: "いしん" },
+      { category: "中学", grade: 2, kanji: "憲法", kana: "けんぽう" },
+      { category: "中学", grade: 2, kanji: "議会", kana: "ぎかい" },
+      { category: "中学", grade: 2, kanji: "産業", kana: "さんぎょう" },
+      { category: "中学", grade: 2, kanji: "貿易", kana: "ぼうえき" },
+      { category: "中学", grade: 2, kanji: "気候", kana: "きこう" },
+      { category: "中学", grade: 2, kanji: "地形", kana: "ちけい" },
+      { category: "中学", grade: 2, kanji: "資源", kana: "しげん" },
+      { category: "中学", grade: 2, kanji: "人口", kana: "じんこう" },
+      { category: "中学", grade: 2, kanji: "都市", kana: "とし" },
+      { category: "中学", grade: 2, kanji: "過疎", kana: "かそ" },
+      { category: "中学", grade: 2, kanji: "環境", kana: "かんきょう" },
+      { category: "中学", grade: 2, kanji: "保護", kana: "ほご" },
+      { category: "中学", grade: 2, kanji: "権利", kana: "けんり" },
+      { category: "中学", grade: 2, kanji: "義務", kana: "ぎむ" },
+      { category: "中学", grade: 2, kanji: "責任", kana: "せきにん" },
+      { category: "中学", grade: 2, kanji: "判断", kana: "はんだん" },
+      { category: "中学", grade: 2, kanji: "表現", kana: "ひょうげん" },
+      { category: "中学", grade: 2, kanji: "批判", kana: "ひはん" },
+      { category: "中学", grade: 2, kanji: "主張", kana: "しゅちょう" },
+      { category: "中学", grade: 2, kanji: "提案", kana: "ていあん" },
+      { category: "中学", grade: 2, kanji: "解決", kana: "かいけつ" },
+      { category: "中学", grade: 2, kanji: "協力", kana: "きょうりょく" },
+      { category: "中学", grade: 2, kanji: "成長", kana: "せいちょう" },
+      { category: "中学", grade: 2, kanji: "発展", kana: "はってん" },
+      { category: "中学", grade: 2, kanji: "変化", kana: "へんか" },
+
+      // 【中学3年生レベル (50語)】
+      { category: "中学", grade: 3, kanji: "矛盾", kana: "むじゅん" },
+      { category: "中学", grade: 3, kanji: "感慨", kana: "かんがい" },
+      { category: "中学", grade: 3, kanji: "敷衍", kana: "ふえん" },
+      { category: "中学", grade: 3, kanji: "俯瞰", kana: "ふかん" },
+      { category: "中学", grade: 3, kanji: "概念", kana: "がいねん" },
+      { category: "中学", grade: 3, kanji: "抽象", kana: "ちゅうしょう" },
+      { category: "中学", grade: 3, kanji: "具象", kana: "ぐしょう" },
+      { category: "中学", grade: 3, kanji: "普遍", kana: "ふへん" },
+      { category: "中学", grade: 3, kanji: "特殊", kana: "とくしゅ" },
+      { category: "中学", grade: 3, kanji: "相対", kana: "そうたい" },
+      { category: "中学", grade: 3, kanji: "絶対", kana: "ぜったい" },
+      { category: "中学", grade: 3, kanji: "認識", kana: "にんしき" },
+      { category: "中学", grade: 3, kanji: "意識", kana: "いしき" },
+      { category: "中学", grade: 3, kanji: "無意識", kana: "むいしき" },
+      { category: "中学", grade: 3, kanji: "現象", kana: "げんしょう" },
+      { category: "中学", grade: 3, kanji: "本質", kana: "ほんしつ" },
+      { category: "中学", grade: 3, kanji: "構造", kana: "こうぞう" },
+      { category: "中学", grade: 3, kanji: "機能", kana: "きのう" },
+      { category: "中学", grade: 3, kanji: "対象", kana: "たいしょう" },
+      { category: "中学", grade: 3, kanji: "主体", kana: "しゅたい" },
+      { category: "中学", grade: 3, kanji: "客観", kana: "きゃっかん" },
+      { category: "中学", grade: 3, kanji: "主観", kana: "しゅかん" },
+      { category: "中学", grade: 3, kanji: "論理", kana: "ろんり" },
+      { category: "中学", grade: 3, kanji: "倫理", kana: "りんり" },
+      { category: "中学", grade: 3, kanji: "哲学", kana: "てつがく" },
+      { category: "中学", grade: 3, kanji: "美学", kana: "びがく" },
+      { category: "中学", grade: 3, kanji: "修辞", kana: "しゅうじ" },
+      { category: "中学", grade: 3, kanji: "比喩", kana: "ひゆ" },
+      { category: "中学", grade: 3, kanji: "象徴", kana: "しょうちょう" },
+      { category: "中学", grade: 3, kanji: "暗示", kana: "あんじ" },
+      { category: "中学", grade: 3, kanji: "明示", kana: "めいじ" },
+      { category: "中学", grade: 3, kanji: "混沌", kana: "こんとん" },
+      { category: "中学", grade: 3, kanji: "秩序", kana: "ちつじょ" },
+      { category: "中学", grade: 3, kanji: "調和", kana: "ちょうわ" },
+      { category: "中学", grade: 3, kanji: "葛藤", kana: "かっとう" },
+      { category: "中学", grade: 3, kanji: "糾弾", kana: "きゅうだん" },
+      { category: "中学", grade: 3, kanji: "糾明", kana: "きゅうめい" },
+      { category: "中学", grade: 3, kanji: "糾合", kana: "きゅうごう" },
+      { category: "中学", grade: 3, kanji: "摩擦", kana: "まさつ" },
+      { category: "中学", grade: 3, kanji: "融和", kana: "ゆうわ" },
+      { category: "中学", grade: 3, kanji: "妥協", kana: "だきょう" },
+      { category: "中学", grade: 3, kanji: "折衷", kana: "せっちゅう" },
+      { category: "中学", grade: 3, kanji: "洗練", kana: "せんれん" },
+      { category: "中学", grade: 3, kanji: "昇華", kana: "しょうか" },
+      { category: "中学", grade: 3, kanji: "変革", kana: "へんかく" },
+      { category: "中学", grade: 3, kanji: "革新", kana: "かくしん" },
+      { category: "中学", grade: 3, kanji: "伝統", kana: "でんとう" },
+      { category: "中学", grade: 3, kanji: "継承", kana: "けいしょう" },
+      { category: "中学", grade: 3, kanji: "創造", kana: "そうぞう" },
+      { category: "中学", grade: 3, kanji: "未来", kana: "みらい" },
+
+      // 【その他コース用の予備サンプル】
+      { category: "練習", grade: 1, kanji: "山", kana: "やま" },
+      { category: "練習", grade: 2, kanji: "川", kana: "かわ" },
+      { category: "練習", grade: 3, kanji: "空", kana: "そら" }
+    ];
+
+    const wordList = rawWordList.map(w => {
+      return {
+        ...w,
+        kanaMap: parseKanaToTree(w.kana)
+      };
+    });
+
+    const GAME_TIME_LIMIT = 60;
+    const TIME_BONUS_COMBO_THRESHOLD = 3;
+    const TIME_BONUS_SECONDS = 3;
+
+    let playerNickname = localStorage.getItem('typingPlayerNickname') || 'Player1';
+    let currentCourseWords = [];
+
+    const emptyRankings = {
+      monthly: [],
+      weekly: [],
+      daily: []
+    };
+
+    function getStoredRankings() {
+      const saved = localStorage.getItem('typingRankingsData');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return emptyRankings;
+    }
+
+    function saveScoreToRankings(newCount) {
+      if (selectedCategory === "練習") return 0;
+
+      const rankings = getStoredRankings();
+      const periods = ['monthly', 'weekly', 'daily'];
+      let bestRank = 0;
+
+      periods.forEach(p => {
+        let list = rankings[p] || [];
+        list = list.filter(item => item.name !== playerNickname);
+        list.push({ name: playerNickname, count: newCount });
+        list.sort((a, b) => b.count - a.count);
+
+        const myIndex = list.findIndex(item => item.name === playerNickname);
+        if (myIndex !== -1 && myIndex < 5) {
+          const rank = myIndex + 1;
+          if (bestRank === 0 || rank < bestRank) {
+            bestRank = rank;
+          }
+        }
+
+        rankings[p] = list.slice(0, 5);
+      });
+
+      localStorage.setItem('typingRankingsData', JSON.stringify(rankings));
+      return bestRank;
+    }
+
+    const menuScreen = document.getElementById('menu-screen');
+    const selectScreen = document.getElementById('select-screen');
+    const playScreen = document.getElementById('play-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const rankingScreen = document.getElementById('ranking-screen');
+    const settingsScreen = document.getElementById('settings-screen');
+    const gameOverBanner = document.getElementById('game-over-banner');
+
+    const startBtn = document.getElementById('start-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const rankingBtn = document.getElementById('ranking-btn');
+    const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    const backToSelectBtn = document.getElementById('back-to-select-btn');
+    const backToSelectFromResultBtn = document.getElementById('back-to-select-from-result');
+    const backToMenuFromResultBtn = document.getElementById('back-to-menu-from-result');
+    const backToMenuFromRankingBtn = document.getElementById('back-to-menu-from-ranking');
+    const backToMenuFromSettingsBtn = document.getElementById('back-to-menu-from-settings');
+
+    const nicknameInput = document.getElementById('nickname-input');
+    const nicknameError = document.getElementById('nickname-error');
+    const saveNicknameBtn = document.getElementById('save-nickname-btn');
+
+    const categoryBtns = document.querySelectorAll('.btn-category');
+    const difficultySection = document.getElementById('difficulty-section');
+    const difficultyBtns = document.querySelectorAll('.btn-difficulty');
+    const tabBtns = document.querySelectorAll('.btn-tab');
+    const rankingListElem = document.getElementById('ranking-list');
+
+    const currentModeText = document.getElementById('current-mode');
+    const timerBox = document.getElementById('timer-box');
+    const timerNumElem = document.getElementById('timer-num');
+    const scoreDisplay = document.getElementById('score-display');
+    const comboDisplay = document.getElementById('combo-display');
+    const typedKanaTextElem = document.getElementById('typed-kana-text');
+    const hintTextElem = document.getElementById('hint-text');
+    const kanjiText = document.getElementById('kanji-text');
+    const typedTextElem = document.getElementById('typed-text');
+
+    const resCorrectCount = document.getElementById('result-correct-count');
+    const resTypedChars = document.getElementById('res-typed-chars');
+    const resDifficulty = document.getElementById('res-difficulty');
+    const resMissCount = document.getElementById('res-miss-count');
+    const rankInNotice = document.getElementById('rank-in-notice');
+
+    let selectedCategory = null;
+    let selectedDifficulty = null;
+    let currentWordIndex = 0;
+    let score = 0;
+    let combo = 0;
+    let correctWordCount = 0;
+    let totalTypedChars = 0;
+    let missCount = 0;
+    let timeLeft = GAME_TIME_LIMIT;
+    let timerId = null;
+    let isPlaying = false;
+
+    let currentKanaIndex = 0;
+    let currentTypedInNode = "";
+    let accumulatedTyped = ""; 
+    let fullTargetRomaji = "";
+    let hintStep = 0;
+
+    startBtn.addEventListener('click', () => {
+      initAudio();
+      menuScreen.classList.add('hidden');
+      selectScreen.classList.remove('hidden');
+    });
+
+    settingsBtn.addEventListener('click', () => {
+      nicknameInput.value = playerNickname;
+      nicknameError.textContent = "";
+      menuScreen.classList.add('hidden');
+      settingsScreen.classList.remove('hidden');
+    });
+
+    nicknameInput.addEventListener('input', () => {
+      const val = nicknameInput.value;
+      const regex = /^[a-zA-Z0-9]*$/;
+      if (!regex.test(val)) {
+        nicknameError.textContent = "半角英数字（英語と数字）のみ使用できます";
+      } else {
+        nicknameError.textContent = "";
+      }
+    });
+
+    saveNicknameBtn.addEventListener('click', () => {
+      const val = nicknameInput.value.trim();
+      const regex = /^[a-zA-Z0-9]+$/;
+      
+      if (!val) {
+        nicknameError.textContent = "ニックネームを入力してください";
+        return;
+      }
+      if (!regex.test(val)) {
+        nicknameError.textContent = "半角英数字（英語と数字）のみ使用できます";
+        return;
+      }
+
+      playerNickname = val;
+      localStorage.setItem('typingPlayerNickname', playerNickname);
+      alert(`ニックネームを「${playerNickname}」に保存しました！`);
+      
+      settingsScreen.classList.add('hidden');
+      menuScreen.classList.remove('hidden');
+    });
+
+    rankingBtn.addEventListener('click', () => {
+      menuScreen.classList.add('hidden');
+      rankingScreen.classList.remove('hidden');
+      switchRankingTab('monthly');
+    });
+
+    backToMenuBtn.addEventListener('click', () => {
+      resetSelection();
+      selectScreen.classList.add('hidden');
+      menuScreen.classList.remove('hidden');
+    });
+
+    backToSelectBtn.addEventListener('click', () => {
+      stopGame();
+      gameOverBanner.classList.remove('show');
+      playScreen.classList.add('hidden');
+      selectScreen.classList.remove('hidden');
+    });
+
+    backToSelectFromResultBtn.addEventListener('click', () => {
+      resultScreen.classList.add('hidden');
+      selectScreen.classList.remove('hidden');
+      resetSelection();
+    });
+
+    backToMenuFromResultBtn.addEventListener('click', () => {
+      resultScreen.classList.add('hidden');
+      resetSelection();
+      menuScreen.classList.remove('hidden');
+    });
+
+    backToMenuFromRankingBtn.addEventListener('click', () => {
+      rankingScreen.classList.add('hidden');
+      menuScreen.classList.remove('hidden');
+    });
+
+    backToMenuFromSettingsBtn.addEventListener('click', () => {
+      settingsScreen.classList.add('hidden');
+      menuScreen.classList.remove('hidden');
+    });
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tabType = btn.dataset.tab;
+        switchRankingTab(tabType);
+      });
+    });
+
+    function switchRankingTab(tabType) {
+      const rankings = getStoredRankings();
+      const data = rankings[tabType] || [];
+      rankingListElem.innerHTML = "";
+      
+      if (data.length === 0) {
+        rankingListElem.innerHTML = `<div class="no-record">まだ記録がありません</div>`;
+        return;
+      }
+
+      data.forEach((item, index) => {
+        const rank = index + 1;
+        const isMe = item.name === playerNickname;
+        const row = document.createElement('div');
+        row.className = `ranking-item ${isMe ? 'is-me' : ''}`;
+        row.innerHTML = `
+          <div><span class="rank-num">${rank}位</span> ${item.name} ${isMe ? '（あなた）' : ''}</div>
+          <div class="rank-score">${item.count}問正解</div>
+        `;
+        rankingListElem.appendChild(row);
+      });
+    }
+
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBtns.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedCategory = btn.dataset.cat;
+        difficultySection.classList.add('active');
+      });
+    });
+
+    difficultyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedDifficulty = btn.dataset.diff;
+        selectScreen.classList.add('hidden');
+        playScreen.classList.remove('hidden');
+        startGame();
+      });
+    });
+
+    function resetSelection() {
+      selectedCategory = null;
+      categoryBtns.forEach(b => b.classList.remove('selected'));
+      difficultySection.classList.remove('active');
+    }
+
+    // --- 配列をランダムにシャッフルする関数 ---
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function startGame() {
+      let filteredWords = [];
+      if (selectedCategory === "中学") {
+        if (selectedDifficulty === "簡単") {
+          filteredWords = wordList.filter(w => w.category === "中学" && w.grade === 1);
+        } else if (selectedDifficulty === "普通") {
+          filteredWords = wordList.filter(w => w.category === "中学" && (w.grade === 1 || w.grade === 2));
+        } else if (selectedDifficulty === "難しい") {
+          filteredWords = wordList.filter(w => w.category === "中学");
+        }
+      } else {
+        filteredWords = wordList.filter(w => w.category === selectedCategory && (selectedDifficulty === "簡単" ? w.grade === 1 : selectedDifficulty === "普通" ? w.grade === 2 : w.grade === 3));
+      }
+      
+      if (filteredWords.length === 0) {
+        filteredWords = wordList.filter(w => w.category === selectedCategory);
+        if (filteredWords.length === 0) {
+          filteredWords = wordList;
+        }
+      }
+
+      // ★ 抽出した単語リストを完全にランダム（バラバラ）にシャッフル！
+      currentCourseWords = shuffleArray([...filteredWords]);
+
+      score = 0;
+      combo = 0;
+      correctWordCount = 0;
+      totalTypedChars = 0;
+      missCount = 0;
+      timeLeft = GAME_TIME_LIMIT;
+      currentWordIndex = 0;
+      isPlaying = true;
+      gameOverBanner.classList.remove('show');
+      resultScreen.classList.add('hidden');
+
+      currentModeText.textContent = `コース: ${selectedCategory} / ${selectedDifficulty}`;
+      scoreDisplay.textContent = `スコア: ${score}`;
+      comboDisplay.textContent = `コンボ: ${combo}`;
+      
+      if (selectedCategory === "練習") {
+        timerNumElem.textContent = "無制限";
+        timerNumElem.classList.add('endless');
+        timerBox.classList.add('endless-border');
+      } else {
+        timerNumElem.textContent = timeLeft;
+        timerNumElem.classList.remove('endless');
+        timerBox.classList.remove('endless-border');
+        startTimer();
+      }
+
+      loadWord();
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      timerId = setInterval(() => {
+        timeLeft--;
+        timerNumElem.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      stopGame();
+      gameOverBanner.classList.add('show');
+      const achievedRank = saveScoreToRankings(correctWordCount);
+
+      setTimeout(() => {
+        gameOverBanner.classList.remove('show');
+        playScreen.classList.add('hidden');
+        
+        if (achievedRank > 0) {
+          rankInNotice.textContent = `🎉 ランキング ${achievedRank}位 にランクイン！`;
+        } else {
+          rankInNotice.textContent = "";
+        }
+
+        resCorrectCount.textContent = `${correctWordCount}問正解！`;
+        resTypedChars.textContent = totalTypedChars;
+        resDifficulty.textContent = `${selectedCategory} / ${selectedDifficulty}`;
+        resMissCount.textContent = missCount;
+
+        resultScreen.classList.remove('hidden');
+      }, 1500);
+    }
+
+    function stopGame() {
+      isPlaying = false;
+      clearInterval(timerId);
+    }
+
+    function loadWord() {
+      if (currentWordIndex >= currentCourseWords.length) {
+        // リストの最後まで行ったら再度シャッフルしてループさせる
+        shuffleArray(currentCourseWords);
+        currentWordIndex = 0;
+      }
+      const word = currentCourseWords[currentWordIndex];
+      kanjiText.textContent = word.kanji;
+      
+      currentKanaIndex = 0;
+      currentTypedInNode = "";
+      accumulatedTyped = "";
+      hintStep = 0;
+      hintTextElem.textContent = "";
+
+      fullTargetRomaji = word.kanaMap.map(item => item.patterns[0]).join('');
+
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const word = currentCourseWords[currentWordIndex];
+      
+      let completedKana = "";
+      for (let i = 0; i < currentKanaIndex; i++) {
+        completedKana += word.kanaMap[i].kana;
+      }
+      if (word.kanaMap[currentKanaIndex] && word.kanaMap[currentKanaIndex].kana === "ん" && currentTypedInNode === "n") {
+        completedKana += "ん";
+      }
+
+      typedKanaTextElem.textContent = completedKana;
+      typedTextElem.textContent = accumulatedTyped;
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (!isPlaying) return;
+
+      const word = currentCourseWords[currentWordIndex];
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (hintStep < fullTargetRomaji.length) {
+          hintStep++;
+          hintTextElem.textContent = fullTargetRomaji.substring(0, hintStep);
+        }
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+      const key = e.key.toLowerCase();
+
+      let activeNode = word.kanaMap[currentKanaIndex];
+      if (!activeNode) return;
+
+      if (activeNode.kana === "ん") {
+        if (currentTypedInNode === "") {
+          if (key === "n") {
+            currentTypedInNode = "n";
+            accumulatedTyped += key;
+            totalTypedChars++;
+            updateDisplay();
+            return;
+          }
+        } else if (currentTypedInNode === "n") {
+          if (key === "n") {
+            currentTypedInNode = "";
+            accumulatedTyped += key;
+            totalTypedChars++;
+            currentKanaIndex++;
+            score += 10;
+            scoreDisplay.textContent = `スコア: ${score}`;
+
+            if (checkWordCompleted(word)) return;
+            updateDisplay();
+            return;
+          } else {
+            let nextNode = word.kanaMap[currentKanaIndex + 1];
+            if (nextNode && nextNode.patterns.some(p => p.startsWith(key))) {
+              currentKanaIndex++;
+              currentTypedInNode = key;
+              accumulatedTyped += key;
+              totalTypedChars++;
+              score += 10;
+              scoreDisplay.textContent = `スコア: ${score}`;
+
+              let isNodeCompleted = nextNode.patterns.includes(currentTypedInNode);
+              if (isNodeCompleted) {
+                currentKanaIndex++;
+                currentTypedInNode = "";
+              }
+
+              if (checkWordCompleted(word)) return;
+              updateDisplay();
+              return;
+            }
+          }
+        }
+      }
+
+      let nextTyped = currentTypedInNode + key;
+
+      let isDoubleConsonantComplete = false;
+      if (activeNode.kana === "っ") {
+        let nextNode = word.kanaMap[currentKanaIndex + 1];
+        if (nextNode) {
+          let matchesNext = nextNode.patterns.some(p => p.startsWith(key));
+          if (matchesNext && currentTypedInNode === key) {
+            isDoubleConsonantComplete = true;
+          }
+        }
+      }
+
+      let isValidMatch = activeNode.patterns.some(p => p.startsWith(nextTyped));
+
+      if (isValidMatch && !isDoubleConsonantComplete) {
+        currentTypedInNode = nextTyped;
+        accumulatedTyped += key;
+        totalTypedChars++;
+        score += 10;
+        scoreDisplay.textContent = `スコア: ${score}`;
+
+        let isNodeCompleted = activeNode.patterns.includes(currentTypedInNode);
+        if (isNodeCompleted) {
+          currentKanaIndex++;
+          currentTypedInNode = "";
+
+          if (checkWordCompleted(word)) return;
+        }
+
+        updateDisplay();
+      } else if (isDoubleConsonantComplete) {
+        accumulatedTyped += key;
+        totalTypedChars++;
+        currentKanaIndex++;
+        currentTypedInNode = "";
+
+        let nextActiveNode = word.kanaMap[currentKanaIndex];
+        if (nextActiveNode && nextActiveNode.patterns.some(p => p.startsWith(key))) {
+          currentTypedInNode = key;
+          let isNodeCompleted = nextActiveNode.patterns.includes(currentTypedInNode);
+          if (isNodeCompleted) {
+            currentKanaIndex++;
+            currentTypedInNode = "";
+          }
+        }
+
+        score += 10;
+        scoreDisplay.textContent = `スコア: ${score}`;
+
+        if (checkWordCompleted(word)) return;
+        updateDisplay();
+      } else {
+        playMissSound();
+        combo = 0;
+        comboDisplay.textContent = `コンボ: ${combo}`;
+        missCount++;
+      }
+    });
+
+    function checkWordCompleted(word) {
+      if (currentKanaIndex >= word.kanaMap.length) {
+        playCorrectSound();
+        combo++;
+        correctWordCount++;
+        comboDisplay.textContent = `コンボ: ${combo}`;
+
+        if (selectedCategory !== "練習") {
+          if (combo % TIME_BONUS_COMBO_THRESHOLD === 0) {
+            timeLeft += TIME_BONUS_SECONDS;
+            timerNumElem.textContent = timeLeft;
+          }
+        }
+
+        currentWordIndex++;
+        setTimeout(loadWord, 150);
+        return true;
+      }
+      return false;
+    }
+  </script>
+
+</body>
+</html>
