@@ -710,6 +710,9 @@
   <div class="ad-space">広告エリア（右）</div>
 
   <script>
+    // --- オンラインランキング用の設定（GASのURLをここに貼り付けてください） ---
+    const GAS_URL = "ここにウェブアプリのURLを貼り付け";
+
     // --- かな→ローマ字変換テーブル（ヘボン式・訓令式・分割打ち完全網羅） ---
     const ROMAJI_TABLE = {
       'あ': ['a'], 'い': ['i'], 'う': ['u', 'whu'], 'え': ['e'], 'お': ['o'],
@@ -1008,46 +1011,40 @@
     let playerNickname = localStorage.getItem('typingPlayerNickname') || 'Player1';
     let currentCourseWords = [];
 
-    const emptyRankings = {
-      monthly: [],
-      weekly: [],
-      daily: []
-    };
-
-    function getStoredRankings() {
-      const saved = localStorage.getItem('typingRankingsData');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-      return emptyRankings;
-    }
-
-    function saveScoreToRankings(newCount) {
+    // --- オンラインランキング送受信用の関数 ---
+    async function saveScoreToRankings(newCount) {
       if (selectedCategory === "練習") return 0;
 
-      const rankings = getStoredRankings();
-      const periods = ['monthly', 'weekly', 'daily'];
-      let bestRank = 0;
+      try {
+        const response = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "save", name: playerNickname, score: newCount })
+        });
+        return await calculateMyRank(newCount);
+      } catch (e) {
+        console.error("スコアの送信に失敗しました", e);
+        return 0;
+      }
+    }
 
-      periods.forEach(p => {
-        let list = rankings[p] || [];
-        list = list.filter(item => item.name !== playerNickname);
-        list.push({ name: playerNickname, count: newCount });
-        list.sort((a, b) => b.count - a.count);
+    async function calculateMyRank(newCount) {
+      const rankings = await loadOnlineRankings();
+      const myIndex = rankings.findIndex(item => item.name === playerNickname);
+      if (myIndex !== -1 && myIndex < 5) {
+        return myIndex + 1;
+      }
+      return 0;
+    }
 
-        const myIndex = list.findIndex(item => item.name === playerNickname);
-        if (myIndex !== -1 && myIndex < 5) {
-          const rank = myIndex + 1;
-          if (bestRank === 0 || rank < bestRank) {
-            bestRank = rank;
-          }
-        }
-
-        rankings[p] = list.slice(0, 5);
-      });
-
-      localStorage.setItem('typingRankingsData', JSON.stringify(rankings));
-      return bestRank;
+    async function loadOnlineRankings() {
+      try {
+        const response = await fetch(GAS_URL);
+        const top5 = await response.json();
+        return top5;
+      } catch (e) {
+        console.error("ランキングの取得に失敗しました", e);
+        return [];
+      }
     }
 
     const menuScreen = document.getElementById('menu-screen');
@@ -1206,12 +1203,14 @@
       });
     });
 
-    function switchRankingTab(tabType) {
-      const rankings = getStoredRankings();
-      const data = rankings[tabType] || [];
+    // オンラインランキングを表示する関数
+    async function switchRankingTab(tabType) {
+      rankingListElem.innerHTML = `<div class="no-record">読み込み中...</div>`;
+      
+      const data = await loadOnlineRankings();
       rankingListElem.innerHTML = "";
       
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         rankingListElem.innerHTML = `<div class="no-record">まだ記録がありません</div>`;
         return;
       }
@@ -1223,7 +1222,7 @@
         row.className = `ranking-item ${isMe ? 'is-me' : ''}`;
         row.innerHTML = `
           <div><span class="rank-num">${rank}位</span> ${item.name} ${isMe ? '（あなた）' : ''}</div>
-          <div class="rank-score">${item.count}問正解</div>
+          <div class="rank-score">${item.score}問正解</div>
         `;
         rankingListElem.appendChild(row);
       });
@@ -1253,7 +1252,7 @@
       difficultySection.classList.remove('active');
     }
 
-    // --- 配列をランダムにシャッフルする関数 ---
+    // 配列をランダムにシャッフルする関数
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -1283,7 +1282,6 @@
         }
       }
 
-      // ★ 抽出した単語リストを完全にランダム（バラバラ）にシャッフル！
       currentCourseWords = shuffleArray([...filteredWords]);
 
       score = 0;
@@ -1327,10 +1325,10 @@
       }, 1000);
     }
 
-    function endGame() {
+    async function endGame() {
       stopGame();
       gameOverBanner.classList.add('show');
-      const achievedRank = saveScoreToRankings(correctWordCount);
+      const achievedRank = await saveScoreToRankings(correctWordCount);
 
       setTimeout(() => {
         gameOverBanner.classList.remove('show');
@@ -1358,7 +1356,6 @@
 
     function loadWord() {
       if (currentWordIndex >= currentCourseWords.length) {
-        // リストの最後まで行ったら再度シャッフルしてループさせる
         shuffleArray(currentCourseWords);
         currentWordIndex = 0;
       }
