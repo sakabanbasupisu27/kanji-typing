@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>漢字タイピングゲーム</title>
-  <style>
+<style>
     body {
       margin: 0;
       padding: 15px;
-      padding-left: 175px; 
+      padding-left: 175px; /* PC用の左側余白 */
       background-color: #f4f7f6;
       box-sizing: border-box;
       height: 100vh;
@@ -34,6 +34,35 @@
       flex-shrink: 0;
       box-sizing: border-box;
     }
+
+    /* --- ★ここから下がスマホ用の自動切り替え設定（追加・修正） --- */
+    @media screen and (max-width: 768px) {
+      body {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh;
+      }
+
+      .ad-space {
+        display: none !important; /* スマホでは右側の広告スペースを非表示にして画面を広く使う */
+      }
+
+      .box {
+        width: 100% !important;
+        height: 85vh !important;
+        min-height: 500px;
+      }
+
+      h1 {
+        font-size: 55px !important; /* スマホ画面に合わせてタイトル文字を調整 */
+        margin-bottom: 30px !important;
+      }
+    }
+    /* --- ★ここまで --- */
 
     .box {
       position: relative;
@@ -619,7 +648,7 @@
   <div class="box">
 
     <!-- 左下の正方形管理者ボタン -->
-    <button id="admin-square-btn" class="btn-admin-square">
+    <button id="admin-square-btn" class="btn-admin-square" onclick="openPasswordModal()">
       <span class="icon">⚙️</span>
       <span>管理者</span>
     </button>
@@ -755,10 +784,10 @@
 
         <div class="form-group" style="margin-top: 15px;">
           <label>ランキングデータ操作</label>
-          <button id="admin-reset-ranking-btn" class="btn-sub-result" style="background-color: #e74c3c;">ランキング初期化（GAS側で削除）</button>
+          <button id="admin-reset-ranking-btn" class="btn-sub-result" style="background-color: #e74c3c;" onclick="resetRankingData()">ランキング初期化（GAS側で削除）</button>
         </div>
 
-        <button id="admin-save-btn" class="btn-main" style="padding: 14px 0; font-size: 24px; margin-top: 10px;">設定を保存する</button>
+        <button id="admin-save-btn" class="btn-main" style="padding: 14px 0; font-size: 24px; margin-top: 10px;" onclick="saveAdminSettings()">設定を保存する</button>
       </div>
     </div>
 
@@ -767,12 +796,24 @@
   <!-- 右側広告スペース -->
   <div class="ad-space">広告エリア（右）</div>
 
-  <script>
-    // --- オンラインランキング用の設定（GASのURLを貼り付けてください） ---
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwb19w85TWlsaGMpPzujx-z8AzbTF5JSQabh-9R3KlEu5OHTDej4oHBas4o711_jUqY/exec";
-    const ADMIN_PASSWORD = "admin123"; // 管理者用パスワード
+  <!-- パスワード入力モーダル -->
+  <div id="admin-password-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border:3px solid #34495e; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.3); border-radius:16px; text-align:center; width:90%; max-width:350px;">
+    <h3 style="margin-top:0; color:#34495e; font-size:24px;">管理者パスワード</h3>
+    <input type="password" id="admin-pass-input" placeholder="パスワードを入力" style="width:100%; padding:12px; font-size:20px; border:2px solid #bdc3c7; border-radius:8px; box-sizing:border-box; margin-bottom:15px; text-align:center;">
+    <div style="display:flex; gap:10px;">
+      <button onclick="verifyAdminPassword()" style="flex:1; background-color:#2ecc71; color:white; border:none; padding:12px 0; font-size:18px; border-radius:8px; font-weight:bold; cursor:pointer;">送信</button>
+      <button onclick="closePasswordModal()" style="flex:1; background-color:#95a5a6; color:white; border:none; padding:12px 0; font-size:18px; border-radius:8px; font-weight:bold; cursor:pointer;">取消</button>
+    </div>
+    <p id="admin-pass-msg" style="color:red; font-weight:bold; margin-top:10px; margin-bottom:0; font-size:14px;"></p>
+  </div>
 
-    // --- かな→ローマ字変換テーブル（ヘボン式・訓令式・分割打ち完全網羅） ---
+  <script>
+    // --- オンラインランキング用の設定 ---
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwqGj19o1YOlOHaV5P88ZeZMlD4GUNaTeikdid2yI8D_5myzGT1oFPrveJbhUEkDr1V/exec";
+    const ADMIN_PASSWORD = "admin123";
+    let gameTimeLimit = 60;
+
+    // --- かな→ローマ字変換テーブル ---
     const ROMAJI_TABLE = {
       'あ': ['a'], 'い': ['i'], 'う': ['u', 'whu'], 'え': ['e'], 'お': ['o'],
       'か': ['ka', 'ca'], 'き': ['ki'], 'く': ['ku', 'cu'], 'け': ['ke'], 'こ': ['ko', 'co'],
@@ -1059,7 +1100,6 @@
       };
     });
 
-    let gameTimeLimit = Number(localStorage.getItem('typingGameTimeLimit')) || 60;
     const TIME_BONUS_COMBO_THRESHOLD = 3;
     const TIME_BONUS_SECONDS = 3;
 
@@ -1092,16 +1132,19 @@
     }
 
     async function loadOnlineRankings() {
-      try {
-        const response = await fetch(GAS_URL);
-        const top5 = await response.json();
-        return top5;
-      } catch (e) {
-        console.error("ランキングの取得に失敗しました", e);
-        return [];
-      }
+  try {
+    const response = await fetch(`${GAS_URL}?action=getRanking`);
+    const data = await response.json();
+    // サーバーから { success: true, rankings: [...] } の形式で返ってくるため、配列を取り出す
+    if (data && data.rankings) {
+      return data.rankings;
     }
-
+    return [];
+  } catch (e) {
+    console.error("ランキングの取得に失敗しました", e);
+    return [];
+  }
+}
     const menuScreen = document.getElementById('menu-screen');
     const selectScreen = document.getElementById('select-screen');
     const playScreen = document.getElementById('play-screen');
@@ -1171,44 +1214,80 @@
     let fullTargetRomaji = "";
     let hintStep = 0;
 
-    // --- 管理者ボタンイベント ---
-    adminSquareBtn.addEventListener('click', () => {
-      const pass = prompt("管理者用パスワードを入力してください:");
-      if (pass === ADMIN_PASSWORD) {
-        adminTimeInput.value = gameTimeLimit;
-        menuScreen.classList.add('hidden');
-        adminScreen.classList.remove('hidden');
-      } else if (pass !== null) {
-        alert("パスワードが違います。");
+    // --- 管理者パネル関連の処理 ---
+    function openPasswordModal() {
+      const modal = document.getElementById('admin-password-modal');
+      if (modal) {
+        modal.style.display = 'block';
+        document.getElementById('admin-pass-input').value = '';
+        document.getElementById('admin-pass-msg').innerText = '';
+        document.getElementById('admin-pass-input').focus();
       }
-    });
+    }
 
-    adminSaveBtn.addEventListener('click', () => {
+    function closePasswordModal() {
+      const modal = document.getElementById('admin-password-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function verifyAdminPassword() {
+      const pass = document.getElementById('admin-pass-input').value;
+      const msg = document.getElementById('admin-pass-msg');
+      if (!pass) { msg.innerText = "パスワードを入力してください"; return; }
+      msg.style.color = "blue";
+      msg.innerText = "照合中...";
+
+      fetch(`${GAS_URL}?action=verifyAdmin&pass=${encodeURIComponent(pass)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success || data.status === "ok") {
+            closePasswordModal();
+            adminTimeInput.value = gameTimeLimit;
+            menuScreen.classList.add('hidden');
+            adminScreen.classList.remove('hidden');
+          } else {
+            msg.style.color = "red";
+            msg.innerText = "パスワードが違います";
+          }
+        })
+        .catch(err => {
+          if (pass === ADMIN_PASSWORD) {
+            closePasswordModal();
+            adminTimeInput.value = gameTimeLimit;
+            menuScreen.classList.add('hidden');
+            adminScreen.classList.remove('hidden');
+          } else {
+            msg.style.color = "red";
+            msg.innerText = "認証エラー";
+          }
+        });
+    }
+
+    function saveAdminSettings() {
       const newTime = Number(adminTimeInput.value);
       if (newTime >= 5 && newTime <= 300) {
-        gameTimeLimit = newTime;
-        localStorage.setItem('typingGameTimeLimit', gameTimeLimit);
-        alert(`制限時間を ${gameTimeLimit} 秒に保存しました！`);
-        adminScreen.classList.add('hidden');
-        menuScreen.classList.remove('hidden');
+        fetch(`${GAS_URL}?action=saveSettings&time=${encodeURIComponent(newTime)}`)
+          .then(res => res.json())
+          .then(data => {
+            gameTimeLimit = newTime;
+            alert(`制限時間を ${gameTimeLimit} 秒に保存しました！全員に反映されます。`);
+            adminScreen.classList.add('hidden');
+            menuScreen.classList.remove('hidden');
+          })
+          .catch(e => alert("サーバーへの保存に失敗しました。"));
       } else {
         alert("制限時間は5秒〜300秒の間で設定してください。");
       }
-    });
+    }
 
-    adminResetRankingBtn.addEventListener('click', async () => {
+    function resetRankingData() {
       if (confirm("本当にランキングデータを初期化しますか？")) {
-        try {
-          await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "reset" })
-          });
-          alert("ランキングデータをリセットしました！");
-        } catch (e) {
-          alert("リセットに失敗しました。");
-        }
+        fetch(`${GAS_URL}?action=resetRanking`)
+          .then(res => res.json())
+          .then(data => alert("ランキングデータをリセットしました！"))
+          .catch(e => alert("リセットに失敗しました。"));
       }
-    });
+    }
 
     startBtn.addEventListener('click', () => {
       initAudio();
@@ -1320,7 +1399,37 @@
         return;
       }
 
-      data.forEach((item, index) => {
+      const now = new Date();
+
+      // 月間・週間・今日の条件に合わせてデータを絞り込む
+      const filtered = data.filter(item => {
+        if (!item.timestamp) return true; // タイムスタンプがないデータはそのまま表示
+        const itemDate = new Date(item.timestamp);
+
+        if (tabType === "daily") {
+          // 今日（年・月・日が同じ）
+          return itemDate.getFullYear() === now.getFullYear() &&
+                 itemDate.getMonth() === now.getMonth() &&
+                 itemDate.getDate() === now.getDate();
+        } else if (tabType === "weekly") {
+          // 週間（過去7日以内）
+          const diffTime = now - itemDate;
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          return diffDays <= 7;
+        } else if (tabType === "monthly") {
+          // 月間（今月：年と月が同じ）
+          return itemDate.getFullYear() === now.getFullYear() &&
+                 itemDate.getMonth() === now.getMonth();
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        rankingListElem.innerHTML = `<div class="no-record">この期間の記録はありません</div>`;
+        return;
+      }
+
+      filtered.forEach((item, index) => {
         const rank = index + 1;
         const isMe = item.name === playerNickname;
         const row = document.createElement('div');
@@ -1637,7 +1746,20 @@
       }
       return false;
     }
-  </script>
 
+    // --- 起動時にサーバーから制限時間を取得する ---
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch(`${GAS_URL}?action=getSettings`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.timeLimit) {
+            gameTimeLimit = parseInt(data.timeLimit);
+            const timerNum = document.getElementById('timer-num');
+            if (timerNum) timerNum.innerText = gameTimeLimit;
+          }
+        })
+        .catch(e => console.log("設定ロード失敗"));
+    });
+  </script>
 </body>
 </html>
