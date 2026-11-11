@@ -1132,19 +1132,23 @@
     }
 
     async function loadOnlineRankings() {
-  try {
-    const response = await fetch(`${GAS_URL}?action=getRanking`);
-    const data = await response.json();
-    // サーバーから { success: true, rankings: [...] } の形式で返ってくるため、配列を取り出す
-    if (data && data.rankings) {
-      return data.rankings;
+      try {
+        const response = await fetch(GAS_URL + "?action=getRanking");
+        const result = await response.json();
+        
+        if (!result.success || !result.rankings) {
+          console.warn("ランキングデータの取得に失敗しました");
+          return [];
+        }
+        
+        // 完全版GAS側ですでに "player1" は除外されていますが、念のためここでも弾く形にします
+        return result.rankings.filter(item => item.name && item.name.toString().toLowerCase() !== "player1");
+        
+      } catch (e) {
+        console.error("ランキングの読み込みに失敗しました", e);
+        return [];
+      }
     }
-    return [];
-  } catch (e) {
-    console.error("ランキングの取得に失敗しました", e);
-    return [];
-  }
-}
     const menuScreen = document.getElementById('menu-screen');
     const selectScreen = document.getElementById('select-screen');
     const playScreen = document.getElementById('play-screen');
@@ -1760,6 +1764,55 @@
         })
         .catch(e => console.log("設定ロード失敗"));
     });
+    // ランキングを取得して画面に表示する関数
+async function fetchAndDisplayRanking() {
+  try {
+    const response = await fetch(GAS_URL + "?action=getRanking");
+    const result = await response.json();
+    
+    if (!result.success || !result.rankings) {
+      console.warn("ランキングデータの取得に失敗しました");
+      return;
+    }
+    
+    const rankings = result.rankings;
+    const listElement = document.getElementById("ranking-list");
+    if (!listElement) return;
+    
+    listElement.innerHTML = ""; // 一旦クリア
+
+    rankings.slice(0, 5).forEach((player, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${index + 1}位: ${player.name} - ${player.score}点`;
+      listElement.appendChild(li);
+    });
+
+  } catch (error) {
+    console.error("ランキング取得エラー:", error);
+  }
+}
+    // 管理者：ランキング初期化ボタンが押されたときの処理
+async function resetRankingData() {
+  // パスワード認証モーダルを表示するか、直接リセット処理を行うか
+  // （すでにパスワード認証を通っている管理者パネル内なので、直接リセットを実行します）
+  if (!confirm("本当にランキングデータを初期化（削除）しますか？")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(GAS_URL + "?action=resetRanking");
+    const result = await response.json();
+
+    if (result.success) {
+      alert("ランキングを初期化しました！");
+    } else {
+      alert("初期化に失敗しました: " + (result.message || "不明なエラー"));
+    }
+  } catch (error) {
+    console.error("初期化通信エラー:", error);
+    alert("通信エラーが発生しました。");
+  }
+}
   </script>
 </body>
 </html>
