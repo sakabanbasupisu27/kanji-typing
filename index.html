@@ -771,7 +771,7 @@
       </div>
     </div>
 
-    <!-- 7. 管理者専用パネル画面 -->
+ <!-- 7. 管理者専用パネル画面 -->
     <div id="admin-screen" class="screen-content hidden">
       <button id="back-to-menu-from-admin" class="btn-back">← もどる</button>
       <h2 class="screen-title" style="margin-bottom: 25px;">管理者設定</h2>
@@ -787,11 +787,19 @@
           <button id="admin-reset-ranking-btn" class="btn-sub-result" style="background-color: #e74c3c;" onclick="resetRankingData()">ランキング初期化（GAS側で削除）</button>
         </div>
 
+        <!-- 【ここを追加】ランキング個別編集エリア -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label>ランキング個別編集</label>
+          <div id="admin-ranking-editor" style="max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px;">
+            <p style="color: #666; font-size: 14px; text-align: center;">ボタンを押すと読み込まれます</p>
+          </div>
+          <button type="button" class="btn-sub-result" style="background-color: #3498db;" onclick="loadRankingForAdmin()">ランキング一覧を読み込む</button>
+        </div>
+        <!-- 追加ここまで -->
+
         <button id="admin-save-btn" class="btn-main" style="padding: 14px 0; font-size: 24px; margin-top: 10px;" onclick="saveAdminSettings()">設定を保存する</button>
       </div>
     </div>
-
-  </div>
 
   <!-- 右側広告スペース -->
   <div class="ad-space">広告エリア（右）</div>
@@ -1876,6 +1884,61 @@ window.addEventListener('keydown', (event) => {
     }
   }
 });
+    // 1. 管理者画面でランキング一覧を読み込んで表示する関数
+function loadRankingForAdmin() {
+  const container = document.getElementById('admin-ranking-editor');
+  container.innerHTML = '<p style="text-align: center; color: #666;">読み込み中...</p>';
+
+  // GAS側の getRankingData 関数を呼び出してランキングを取得する
+  google.script.run
+    .withSuccessHandler(function(rankings) {
+      if (!rankings || rankings.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">データがありません</p>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      rankings.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.marginBottom = '6px';
+        row.style.padding = '6px';
+        row.style.background = '#fff';
+        row.style.borderRadius = '4px';
+        row.style.border = '1px solid #eee';
+
+        // 順位・名前・秒数の入力欄・保存ボタンを作成
+        row.innerHTML = `
+          <span style="font-size: 14px; font-weight: bold; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${index + 1}. ${item.name}</span>
+          <input type="number" id="admin-score-${index}" value="${item.score}" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+          <button type="button" onclick="saveEachRanking(${index}, ${item.row})" style="background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">保存</button>
+        `;
+        container.appendChild(row);
+      });
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = '<p style="text-align: center; color: #e74c3c;">データの読み込みに失敗しました</p>';
+    })
+    .getRankingData();
+}
+
+// 2. 個別のランキング行の「保存」ボタンが押されたときの関数
+function saveEachRanking(index, sheetRow) {
+  const inputElem = document.getElementById(`admin-score-${index}`);
+  const newScore = inputElem.value;
+
+  // GAS側の updateRankingRecord 関数を呼び出してスプレッドシートの数値を更新する
+  google.script.run
+    .withSuccessHandler(function(res) {
+      alert('秒数を更新しました！');
+    })
+    .withFailureHandler(function(err) {
+      alert('更新に失敗しました');
+    })
+    .updateRankingRecord(sheetRow, newScore);
+}
   </script>
 </body>
 </html>
