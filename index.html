@@ -1286,17 +1286,17 @@
 
     let isConfirmingReset = false;
 
+let isConfirmingReset = false;
+
 function resetRankingData() {
-  const btn = document.getElementById("admin-reset-ranking-btn"); // 管理者画面の初期化ボタンのIDに合わせて調整
+  const btn = document.getElementById("admin-reset-ranking-btn"); // ボタンのID
 
   if (!isConfirmingReset) {
-    // 1回目のクリック：確認状態にする（ポップアップを出さない）
+    // 1回目のクリック：ポップアップを出さずに、ボタンの見た目を変える
     isConfirmingReset = true;
     if (btn) {
       btn.textContent = "本当に初期化しますか？(再度クリック)";
-      btn.style.backgroundColor = "#c0392b";
-    } else {
-      alert("もう一度「ランキング初期化」ボタンを押すと実行されます。");
+      btn.style.backgroundColor = "#c0392b"; // 色を少し濃くする
     }
 
     // 5秒以内に2回目が押されなかったら元に戻す
@@ -1314,11 +1314,11 @@ function resetRankingData() {
   fetch(`${GAS_URL}?action=resetRanking`)
     .then(res => res.json())
     .then(data => {
-      // alertの代わりに画面内のテキストやコンソール等で通知、またはそのままalert
-      console.log("ランキングデータをリセットしました！");
+      alert("ランキングデータをリセットしました！"); // 完了の通知（必要に応じて）
     })
     .catch(e => {
       console.error("リセットに失敗しました。", e);
+      alert("リセットに失敗しました。");
     });
 }
 
