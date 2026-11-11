@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>漢字タイピングゲーム</title>
-<style>
+  <style>
     body {
       margin: 0;
       padding: 15px;
@@ -35,7 +35,7 @@
       box-sizing: border-box;
     }
 
-    /* --- ★ここから下がスマホ用の自動切り替え設定（追加・修正） --- */
+    /* --- スマホ用の自動切り替え設定 --- */
     @media screen and (max-width: 768px) {
       body {
         padding-left: 10px !important;
@@ -48,7 +48,7 @@
       }
 
       .ad-space {
-        display: none !important; /* スマホでは右側の広告スペースを非表示にして画面を広く使う */
+        display: none !important;
       }
 
       .box {
@@ -58,11 +58,10 @@
       }
 
       h1 {
-        font-size: 55px !important; /* スマホ画面に合わせてタイトル文字を調整 */
+        font-size: 55px !important;
         margin-bottom: 30px !important;
       }
     }
-    /* --- ★ここまで --- */
 
     .box {
       position: relative;
@@ -771,7 +770,7 @@
       </div>
     </div>
 
- <!-- 7. 管理者専用パネル画面 -->
+    <!-- 7. 管理者専用パネル画面 -->
     <div id="admin-screen" class="screen-content hidden">
       <button id="back-to-menu-from-admin" class="btn-back">← もどる</button>
       <h2 class="screen-title" style="margin-bottom: 25px;">管理者設定</h2>
@@ -787,7 +786,7 @@
           <button id="admin-reset-ranking-btn" class="btn-sub-result" style="background-color: #e74c3c;" onclick="resetRankingData()">ランキング初期化（GAS側で削除）</button>
         </div>
 
-        <!-- 【ここを追加】ランキング個別編集エリア -->
+        <!-- ランキング個別編集エリア -->
         <div class="form-group" style="margin-top: 15px;">
           <label>ランキング個別編集</label>
           <div id="admin-ranking-editor" style="max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px;">
@@ -795,11 +794,12 @@
           </div>
           <button type="button" class="btn-sub-result" style="background-color: #3498db;" onclick="loadRankingForAdmin()">ランキング一覧を読み込む</button>
         </div>
-        <!-- 追加ここまで -->
 
         <button id="admin-save-btn" class="btn-main" style="padding: 14px 0; font-size: 24px; margin-top: 10px;" onclick="saveAdminSettings()">設定を保存する</button>
       </div>
     </div>
+
+  </div>
 
   <!-- 右側広告スペース -->
   <div class="ad-space">広告エリア（右）</div>
@@ -1114,10 +1114,8 @@
     let playerNickname = localStorage.getItem('typingPlayerNickname') || 'Player1';
     let currentCourseWords = [];
 
-    // --- オンラインランキング送受信関数 ---
     async function saveScoreToRankings(newCount) {
       if (selectedCategory === "練習") return 0;
-
       try {
         await fetch(GAS_URL, {
           method: "POST",
@@ -1143,20 +1141,13 @@
       try {
         const response = await fetch(GAS_URL + "?action=getRanking");
         const result = await response.json();
-        
-        if (!result.success || !result.rankings) {
-          console.warn("ランキングデータの取得に失敗しました");
-          return [];
-        }
-        
-        // 完全版GAS側ですでに "player1" は除外されていますが、念のためここでも弾く形にします
+        if (!result.success || !result.rankings) return [];
         return result.rankings.filter(item => item.name && item.name.toString().toLowerCase() !== "player1");
-        
       } catch (e) {
-        console.error("ランキングの読み込みに失敗しました", e);
         return [];
       }
     }
+
     const menuScreen = document.getElementById('menu-screen');
     const selectScreen = document.getElementById('select-screen');
     const playScreen = document.getElementById('play-screen');
@@ -1226,7 +1217,6 @@
     let fullTargetRomaji = "";
     let hintStep = 0;
 
-    // --- 管理者パネル関連の処理 ---
     function openPasswordModal() {
       const modal = document.getElementById('admin-password-modal');
       if (modal) {
@@ -1292,52 +1282,52 @@
       }
     }
 
-     isConfirmingReset = false;
+    // --- 安全なランキング初期化機能 ---
+    let isConfirmingReset = false;
 
- isConfirmingReset = false;
-
-function resetRankingData() {
-  const btn = document.getElementById("admin-reset-ranking-btn"); // ボタンのID
-
-  if (!isConfirmingReset) {
-    // 1回目のクリック：ポップアップを出さずに、ボタンの見た目を変える
-    isConfirmingReset = true;
-    if (btn) {
-      btn.textContent = "本当に初期化しますか？(再度クリック)";
-      btn.style.backgroundColor = "#c0392b"; // 色を少し濃くする
+    function resetButtonState() {
+      isConfirmingReset = false;
+      const btn = document.getElementById("admin-reset-ranking-btn");
+      if (btn) {
+        btn.textContent = "ランキング初期化（GAS側で削除）";
+        btn.style.backgroundColor = "#e74c3c";
+      }
     }
 
-    // 5秒以内に2回目が押されなかったら元に戻す
-    setTimeout(() => {
-      if (isConfirmingReset) {
-        resetButtonState();
+    function resetRankingData() {
+      const btn = document.getElementById("admin-reset-ranking-btn");
+      
+      if (!isConfirmingReset) {
+        isConfirmingReset = true;
+        if (btn) {
+          btn.textContent = "本当に 初期化 しますか？(再度クリック)";
+          btn.style.backgroundColor = "#c0392b";
+        }
+        
+        setTimeout(() => {
+          if (isConfirmingReset) {
+            resetButtonState();
+          }
+        }, 5000);
+        return;
       }
-    }, 5000);
-    return;
-  }
-
-  // 2回目のクリック：実際にGASへリセットをリクエストする
-  resetButtonState();
-  
-  fetch(`${GAS_URL}?action=resetRanking`)
-    .then(res => res.json())
-    .then(data => {
-      alert("ランキングデータをリセットしました！"); // 完了の通知（必要に応じて）
-    })
-    .catch(e => {
-      console.error("リセットに失敗しました。", e);
-      alert("リセットに失敗しました。");
-    });
-}
-
-function resetButtonState() {
-  isConfirmingReset = false;
-  const btn = document.getElementById("admin-reset-ranking-btn");
-  if (btn) {
-    btn.textContent = "ランキング初期化（GAS側で削除）";
-    btn.style.backgroundColor = "#e74c3c";
-  }
-}
+      
+      resetButtonState();
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            alert("ランキングデータをリセットしました！");
+            if (typeof loadRankingForAdmin === 'function') {
+              loadRankingForAdmin();
+            }
+          })
+          .withFailureHandler(function(err) {
+            alert("リセットに失敗しました。");
+          })
+          .resetRankingData();
+      }
+    }
 
     startBtn.addEventListener('click', () => {
       initAudio();
@@ -1450,24 +1440,19 @@ function resetButtonState() {
       }
 
       const now = new Date();
-
-      // 月間・週間・今日の条件に合わせてデータを絞り込む
       const filtered = data.filter(item => {
-        if (!item.timestamp) return true; // タイムスタンプがないデータはそのまま表示
+        if (!item.timestamp) return true;
         const itemDate = new Date(item.timestamp);
 
         if (tabType === "daily") {
-          // 今日（年・月・日が同じ）
           return itemDate.getFullYear() === now.getFullYear() &&
                  itemDate.getMonth() === now.getMonth() &&
                  itemDate.getDate() === now.getDate();
         } else if (tabType === "weekly") {
-          // 週間（過去7日以内）
           const diffTime = now - itemDate;
           const diffDays = diffTime / (1000 * 60 * 60 * 24);
           return diffDays <= 7;
         } else if (tabType === "monthly") {
-          // 月間（今月：年と月が同じ）
           return itemDate.getFullYear() === now.getFullYear() &&
                  itemDate.getMonth() === now.getMonth();
         }
@@ -1651,6 +1636,23 @@ function resetButtonState() {
       typedTextElem.textContent = accumulatedTyped;
     }
 
+    // --- ゲーム中のEscキー処理 ---
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (typeof isPlaying !== 'undefined' && isPlaying) {
+          if (typeof stopGame === 'function') {
+            stopGame();
+          }
+          const playScreen = document.getElementById('play-screen');
+          const selectScreen = document.getElementById('select-screen');
+
+          if (playScreen) playScreen.classList.add('hidden');
+          if (selectScreen) selectScreen.classList.remove('hidden');
+        }
+      }
+    });
+
+    // --- キーボードタイピング判定 ---
     window.addEventListener('keydown', (e) => {
       if (!isPlaying) return;
 
@@ -1797,7 +1799,59 @@ function resetButtonState() {
       return false;
     }
 
-    // --- 起動時にサーバーから制限時間を取得する ---
+    // --- 管理者パネル：ランキング編集用関数 ---
+    function loadRankingForAdmin() {
+      const container = document.getElementById('admin-ranking-editor');
+      container.innerHTML = '<p style="text-align: center; color: #666;">読み込み中...</p>';
+
+      google.script.run
+        .withSuccessHandler(function(rankings) {
+          if (!rankings || rankings.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #999;">データがありません</p>';
+            return;
+          }
+          
+          container.innerHTML = '';
+          rankings.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.justifyContent = 'space-between';
+            row.style.marginBottom = '6px';
+            row.style.padding = '6px';
+            row.style.background = '#fff';
+            row.style.borderRadius = '4px';
+            row.style.border = '1px solid #eee';
+
+            row.innerHTML = `
+              <span style="font-size: 14px; font-weight: bold; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${index + 1}. ${item.name}</span>
+              <input type="number" id="admin-score-${index}" value="${item.score}" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+              <button type="button" onclick="saveEachRanking(${index}, ${item.row})" style="background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">保存</button>
+            `;
+            container.appendChild(row);
+          });
+        })
+        .withFailureHandler(function(err) {
+          container.innerHTML = '<p style="text-align: center; color: #e74c3c;">データの読み込みに失敗しました</p>';
+        })
+        .getRankingData();
+    }
+
+    function saveEachRanking(index, sheetRow) {
+      const inputElem = document.getElementById(`admin-score-${index}`);
+      const newScore = inputElem.value;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          alert('秒数を更新しました！');
+        })
+        .withFailureHandler(function(err) {
+          alert('更新に失敗しました');
+        })
+        .updateRankingRecord(sheetRow, newScore);
+    }
+
+    // --- 起動時に制限時間をロード ---
     window.addEventListener('DOMContentLoaded', () => {
       fetch(`${GAS_URL}?action=getSettings`)
         .then(res => res.json())
@@ -1810,164 +1864,6 @@ function resetButtonState() {
         })
         .catch(e => console.log("設定ロード失敗"));
     });
-    // ランキングを取得して画面に表示する関数
-async function fetchAndDisplayRanking() {
-  try {
-    const response = await fetch(GAS_URL + "?action=getRanking");
-    const result = await response.json();
-    
-    if (!result.success || !result.rankings) {
-      console.warn("ランキングデータの取得に失敗しました");
-      return;
-    }
-    
-    const rankings = result.rankings;
-    const listElement = document.getElementById("ranking-list");
-    if (!listElement) return;
-    
-    listElement.innerHTML = ""; // 一旦クリア
-
-    rankings.slice(0, 5).forEach((player, index) => {
-      const li = document.createElement("li");
-      li.textContent = `${index + 1}位: ${player.name} - ${player.score}点`;
-      listElement.appendChild(li);
-    });
-
-  } catch (error) {
-    console.error("ランキング取得エラー:", error);
-  }
-}
-    // 管理者：ランキング初期化ボタンが押されたときの処理
-// --- 誤操作防止の安全なランキング初期化機能 ---
-let isConfirmingReset = false;
-
-function resetButtonState() {
-  isConfirmingReset = false;
-  const btn = document.getElementById("admin-reset-ranking-btn");
-  if (btn) {
-    btn.textContent = "ランキング初期化（GAS側で削除）";
-    btn.style.backgroundColor = "#e74c3c"; // 元の赤色
-  }
-}
-
-function resetRankingData() {
-  const btn = document.getElementById("admin-reset-ranking-btn");
-  
-  if (!isConfirmingReset) {
-    // 1回目のクリック
-    isConfirmingReset = true;
-    if (btn) {
-      btn.textContent = "本当に 初期化 しますか？(再度クリック)";
-      btn.style.backgroundColor = "#c0392b"; // 少し濃い赤
-    }
-    
-    // 5秒以内に2回目が押されなかったら元に戻す
-    setTimeout(() => {
-      if (isConfirmingReset) {
-        resetButtonState();
-      }
-    }, 5000);
-    return;
-  }
-  
-  // 2回目のクリック（実行）
-  resetButtonState();
-  
-  // GAS側の関数を呼び出し
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(res) {
-        alert("ランキングデータをリセットしました！");
-        if (typeof loadRankingForAdmin === 'function') {
-          loadRankingForAdmin();
-        }
-      })
-      .withFailureHandler(function(err) {
-        alert("リセットに失敗しました。");
-      })
-      .resetRankingData(); // GAS側のリセット関数
-  }
-}
-    // 【追加】ゲームプレイ中にEscキーを押したらメニューや前の画面に戻る処理
-window.addEventListener('keydown', (event) => {
-  // 「Esc」キーが押されたとき
-  if (event.key === 'Escape') {
-    // プレイ中（isPlaying が true）のときだけ反応
-    if (typeof isPlaying !== 'undefined' && isPlaying) {
-      
-      // 1. ゲーム（タイマー）を止める
-      if (typeof stopGame === 'function') {
-        stopGame();
-      }
-
-      // 2. プレイ画面を隠して、コース選択画面を表示する
-      const playScreen = document.getElementById('play-screen');
-      const selectScreen = document.getElementById('select-screen'); // コース＆難易度選択画面
-
-      if (playScreen) {
-        playScreen.classList.add('hidden'); // プレイ画面を非表示にする
-      }
-      if (selectScreen) {
-        selectScreen.classList.remove('hidden'); // コース選択画面を表示する
-      }
-    }
-  }
-});
-    // 1. 管理者画面でランキング一覧を読み込んで表示する関数
-function loadRankingForAdmin() {
-  const container = document.getElementById('admin-ranking-editor');
-  container.innerHTML = '<p style="text-align: center; color: #666;">読み込み中...</p>';
-
-  // GAS側の getRankingData 関数を呼び出してランキングを取得する
-  google.script.run
-    .withSuccessHandler(function(rankings) {
-      if (!rankings || rankings.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #999;">データがありません</p>';
-        return;
-      }
-      
-      container.innerHTML = '';
-      rankings.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.justifyContent = 'space-between';
-        row.style.marginBottom = '6px';
-        row.style.padding = '6px';
-        row.style.background = '#fff';
-        row.style.borderRadius = '4px';
-        row.style.border = '1px solid #eee';
-
-        // 順位・名前・秒数の入力欄・保存ボタンを作成
-        row.innerHTML = `
-          <span style="font-size: 14px; font-weight: bold; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${index + 1}. ${item.name}</span>
-          <input type="number" id="admin-score-${index}" value="${item.score}" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
-          <button type="button" onclick="saveEachRanking(${index}, ${item.row})" style="background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">保存</button>
-        `;
-        container.appendChild(row);
-      });
-    })
-    .withFailureHandler(function(err) {
-      container.innerHTML = '<p style="text-align: center; color: #e74c3c;">データの読み込みに失敗しました</p>';
-    })
-    .getRankingData();
-}
-
-// 2. 個別のランキング行の「保存」ボタンが押されたときの関数
-function saveEachRanking(index, sheetRow) {
-  const inputElem = document.getElementById(`admin-score-${index}`);
-  const newScore = inputElem.value;
-
-  // GAS側の updateRankingRecord 関数を呼び出してスプレッドシートの数値を更新する
-  google.script.run
-    .withSuccessHandler(function(res) {
-      alert('秒数を更新しました！');
-    })
-    .withFailureHandler(function(err) {
-      alert('更新に失敗しました');
-    })
-    .updateRankingRecord(sheetRow, newScore);
-}
   </script>
 </body>
 </html>
