@@ -1284,14 +1284,52 @@
       }
     }
 
-    function resetRankingData() {
-      if (confirm("本当にランキングデータを初期化しますか？")) {
-        fetch(`${GAS_URL}?action=resetRanking`)
-          .then(res => res.json())
-          .then(data => alert("ランキングデータをリセットしました！"))
-          .catch(e => alert("リセットに失敗しました。"));
-      }
+    let isConfirmingReset = false;
+
+function resetRankingData() {
+  const btn = document.getElementById("admin-reset-ranking-btn"); // 管理者画面の初期化ボタンのIDに合わせて調整
+
+  if (!isConfirmingReset) {
+    // 1回目のクリック：確認状態にする（ポップアップを出さない）
+    isConfirmingReset = true;
+    if (btn) {
+      btn.textContent = "本当に初期化しますか？(再度クリック)";
+      btn.style.backgroundColor = "#c0392b";
+    } else {
+      alert("もう一度「ランキング初期化」ボタンを押すと実行されます。");
     }
+
+    // 5秒以内に2回目が押されなかったら元に戻す
+    setTimeout(() => {
+      if (isConfirmingReset) {
+        resetButtonState();
+      }
+    }, 5000);
+    return;
+  }
+
+  // 2回目のクリック：実際にGASへリセットをリクエストする
+  resetButtonState();
+  
+  fetch(`${GAS_URL}?action=resetRanking`)
+    .then(res => res.json())
+    .then(data => {
+      // alertの代わりに画面内のテキストやコンソール等で通知、またはそのままalert
+      console.log("ランキングデータをリセットしました！");
+    })
+    .catch(e => {
+      console.error("リセットに失敗しました。", e);
+    });
+}
+
+function resetButtonState() {
+  isConfirmingReset = false;
+  const btn = document.getElementById("admin-reset-ranking-btn");
+  if (btn) {
+    btn.textContent = "ランキング初期化（GAS側で削除）";
+    btn.style.backgroundColor = "#e74c3c";
+  }
+}
 
     startBtn.addEventListener('click', () => {
       initAudio();
