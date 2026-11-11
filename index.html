@@ -1863,16 +1863,15 @@ window.addEventListener('keydown', (event) => {
         stopGame();
       }
 
-      // 2. プレイ画面を隠して、メニュー画面（または選択画面）を表示する
+      // 2. プレイ画面を隠して、コース選択画面を表示する
       const playScreen = document.getElementById('play-screen');
-      const menuScreen = document.getElementById('menu-screen'); // メニューに戻る場合
-      // const selectScreen = document.getElementById('select-screen'); // セレクト画面に戻したい場合はこちら
+      const selectScreen = document.getElementById('select-screen'); // コース＆難易度選択画面
 
       if (playScreen) {
         playScreen.classList.add('hidden'); // プレイ画面を非表示にする
       }
-      if (menuScreen) {
-        menuScreen.classList.remove('hidden'); // メニュー画面を表示する
+      if (selectScreen) {
+        selectScreen.classList.remove('hidden'); // コース選択画面を表示する
       }
     }
   }
