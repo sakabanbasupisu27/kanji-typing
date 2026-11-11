@@ -1838,25 +1838,54 @@ async function fetchAndDisplayRanking() {
   }
 }
     // 管理者：ランキング初期化ボタンが押されたときの処理
-async function resetRankingData() {
-  // パスワード認証モーダルを表示するか、直接リセット処理を行うか
-  // （すでにパスワード認証を通っている管理者パネル内なので、直接リセットを実行します）
-  if (!confirm("本当にランキングデータを初期化（削除）しますか？")) {
+// --- 誤操作防止の安全なランキング初期化機能 ---
+let isConfirmingReset = false;
+
+function resetButtonState() {
+  isConfirmingReset = false;
+  const btn = document.getElementById("admin-reset-ranking-btn");
+  if (btn) {
+    btn.textContent = "ランキング初期化（GAS側で削除）";
+    btn.style.backgroundColor = "#e74c3c"; // 元の赤色
+  }
+}
+
+function resetRankingData() {
+  const btn = document.getElementById("admin-reset-ranking-btn");
+  
+  if (!isConfirmingReset) {
+    // 1回目のクリック
+    isConfirmingReset = true;
+    if (btn) {
+      btn.textContent = "本当に 初期化 しますか？(再度クリック)";
+      btn.style.backgroundColor = "#c0392b"; // 少し濃い赤
+    }
+    
+    // 5秒以内に2回目が押されなかったら元に戻す
+    setTimeout(() => {
+      if (isConfirmingReset) {
+        resetButtonState();
+      }
+    }, 5000);
     return;
   }
-
-  try {
-    const response = await fetch(GAS_URL + "?action=resetRanking");
-    const result = await response.json();
-
-    if (result.success) {
-      alert("ランキングを初期化しました！");
-    } else {
-      alert("初期化に失敗しました: " + (result.message || "不明なエラー"));
-    }
-  } catch (error) {
-    console.error("初期化通信エラー:", error);
-    alert("通信エラーが発生しました。");
+  
+  // 2回目のクリック（実行）
+  resetButtonState();
+  
+  // GAS側の関数を呼び出し
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        alert("ランキングデータをリセットしました！");
+        if (typeof loadRankingForAdmin === 'function') {
+          loadRankingForAdmin();
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert("リセットに失敗しました。");
+      })
+      .resetRankingData(); // GAS側のリセット関数
   }
 }
     // 【追加】ゲームプレイ中にEscキーを押したらメニューや前の画面に戻る処理
