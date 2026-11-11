@@ -1851,6 +1851,29 @@ async function resetRankingData() {
     alert("通信エラーが発生しました。");
   }
 }
+    // 【追加】ゲームプレイ中にEscキーを押したらメニューや前の画面に戻る処理
+window.addEventListener('keydown', (event) => {
+  // 押されたキーが "Escape" (Escキー) かどうかチェック
+  if (event.key === 'Escape') {
+    // プレイ中（isPlaying が true）の場合のみ反応させる
+    if (typeof isPlaying !== 'undefined' && isPlaying) {
+      // 1. ゲームを停止する関数を実行
+      if (typeof stopGame === 'function') {
+        stopGame();
+      }
+
+      // 2. 画面上にある「もどる」ボタンやメニューに戻るボタンがあれば自動でクリックさせる
+      // ※もし戻るボタンのHTML上のIDが違う場合は、ここの 'back-btn' を実際のIDに書き換えてください
+      const backBtn = document.getElementById('back-btn') || document.querySelector('.back-button');
+      if (backBtn) {
+        backBtn.click();
+      } else {
+        // ボタンが見つからない場合はページを再読み込みしてリセット（確実に戻れます）
+        location.reload();
+      }
+    }
+  }
+});
   </script>
 </body>
 </html>
