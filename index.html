@@ -1853,21 +1853,25 @@ async function resetRankingData() {
 }
     // 【追加】ゲームプレイ中にEscキーを押したらメニューや前の画面に戻る処理
 window.addEventListener('keydown', (event) => {
-  // 「Esc」キーが押されたとき
   if (event.key === 'Escape') {
-    // プレイ中（タイマーが動いてゲームをしている状態）のときだけ反応
+    // プレイ中の場合のみ反応
     if (typeof isPlaying !== 'undefined' && isPlaying) {
       
-      // 1. まずゲーム（タイマー）を止める
+      // 1. ゲーム（タイマー）を止める
       if (typeof stopGame === 'function') {
         stopGame();
       }
 
-      // 2. 画面上の「もどる」ボタンを自動で探してクリックさせる
-      // ※もしボタンに「id="back-btn"」や「class="back-btn"」などの名前があればここをそれに合わせます
-      const backBtn = document.getElementById('back-btn') || document.querySelector('.back-btn') || document.querySelector('button');
-      if (backBtn) {
-        backBtn.click();
+      // 2. パスワード画面を出さず、安全に画面を切り替える
+      // ※HTMLのIDに合わせています（もしメニュー画面のIDが違う場合は教えてください）
+      const playScreen = document.getElementById('playScreen');
+      const menuScreen = document.getElementById('menuScreen'); // またはメニュー側のID
+
+      if (playScreen) {
+        playScreen.classList.add('hidden'); // プレイ画面を隠す
+      }
+      if (menuScreen) {
+        menuScreen.classList.remove('hidden'); // メニュー画面を表示する
       }
     }
   }
