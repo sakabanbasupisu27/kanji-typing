@@ -1874,6 +1874,27 @@ function saveEachRanking(index, sheetRow) {
         })
         .catch(e => console.log("設定ロード失敗"));
     });
+    // --- 1. ページ読み込み時に、保存されている名前があれば自動で入力欄にセットする ---
+window.addEventListener('DOMContentLoaded', () => {
+  const savedName = localStorage.getItem('player_name');
+  if (savedName) {
+    const nameInput = document.getElementById('player-name-input'); // ※実際の入力欄のIDに合わせてください
+    if (nameInput) {
+      nameInput.value = savedName;
+    }
+  }
+});
+
+// --- 2. 名前を決定（保存）するボタンが押されたときなどの処理 ---
+function savePlayerName() {
+  const nameInput = document.getElementById('player-name-input');
+  const playerName = nameInput ? nameInput.value : '';
+  
+  if (playerName) {
+    // ブラウザに名前を記憶させる
+    localStorage.setItem('player_name', playerName);
+  }
+}
   </script>
 </body>
 </html>
