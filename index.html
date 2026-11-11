@@ -1799,57 +1799,62 @@
       return false;
     }
 
-    // --- 管理者パネル：ランキング編集用関数 ---
-    function loadRankingForAdmin() {
-      const container = document.getElementById('admin-ranking-editor');
-      container.innerHTML = '<p style="text-align: center; color: #666;">読み込み中...</p>';
+   // --- 管理者パネル：ランキング編集用関数（fetch版） ---
+function loadRankingForAdmin() {
+  const container = document.getElementById('admin-ranking-editor');
+  container.innerHTML = '<p style="text-align: center; color: #666;">読み込み中...</p>';
 
-      google.script.run
-        .withSuccessHandler(function(rankings) {
-          if (!rankings || rankings.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #999;">データがありません</p>';
-            return;
-          }
-          
-          container.innerHTML = '';
-          rankings.forEach((item, index) => {
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.alignItems = 'center';
-            row.style.justifyContent = 'space-between';
-            row.style.marginBottom = '6px';
-            row.style.padding = '6px';
-            row.style.background = '#fff';
-            row.style.borderRadius = '4px';
-            row.style.border = '1px solid #eee';
+  // GASのウェブアプリURLへフェッチでデータを要求する
+  fetch(`${GAS_URL}?action=getRankingData`)
+    .then(res => res.json())
+    .then(rankings => {
+      if (!rankings || rankings.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999;">データがありません</p>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      rankings.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.marginBottom = '6px';
+        row.style.padding = '6px';
+        row.style.background = '#fff';
+        row.style.borderRadius = '4px';
+        row.style.border = '1px solid #eee';
 
-            row.innerHTML = `
-              <span style="font-size: 14px; font-weight: bold; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${index + 1}. ${item.name}</span>
-              <input type="number" id="admin-score-${index}" value="${item.score}" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
-              <button type="button" onclick="saveEachRanking(${index}, ${item.row})" style="background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">保存</button>
-            `;
-            container.appendChild(row);
-          });
-        })
-        .withFailureHandler(function(err) {
-          container.innerHTML = '<p style="text-align: center; color: #e74c3c;">データの読み込みに失敗しました</p>';
-        })
-        .getRankingData();
-    }
+        row.innerHTML = `
+          <span style="font-size: 14px; font-weight: bold; width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${index + 1}. ${item.name}</span>
+          <input type="number" id="admin-score-${index}" value="${item.score}" style="width: 70px; padding: 4px; font-size: 14px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+          <button type="button" onclick="saveEachRanking(${index}, ${item.row})" style="background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">保存</button>
+        `;
+        container.appendChild(row);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      container.innerHTML = '<p style="text-align: center; color: #e74c3c;">データの読み込みに失敗しました</p>';
+    });
+}
 
-    function saveEachRanking(index, sheetRow) {
-      const inputElem = document.getElementById(`admin-score-${index}`);
-      const newScore = inputElem.value;
+function saveEachRanking(index, sheetRow) {
+  const inputElem = document.getElementById(`admin-score-${index}`);
+  const newScore = inputElem.value;
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          alert('秒数を更新しました！');
-        })
-        .withFailureHandler(function(err) {
-          alert('更新に失敗しました');
-        })
-        .updateRankingRecord(sheetRow, newScore);
-    }
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "updateRankingRecord", row: sheetRow, score: newScore })
+  })
+    .then(res => res.json())
+    .then(res => {
+      alert('秒数を更新しました！');
+    })
+    .catch(err => {
+      alert('更新に失敗しました');
+    });
+}
 
     // --- 起動時に制限時間をロード ---
     window.addEventListener('DOMContentLoaded', () => {
